@@ -1,0 +1,33 @@
+## IDEA
+
+# Output of IDEA
+out/
+
+.idea/**/workspace.xml
+.idea/uiDesigner.xml
+
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+.idea/compiler.xml
+.idea/jarRepositories.xml
+.idea/*.iml
+
+.idea/**/gradle.xml
+
+## Gradle
+
+.gradle
+
+# Output of Gradle
+**/build/
+!src/**/build/
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+
+## Sonar
+
+.idea/sonarlint/
