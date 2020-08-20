@@ -24,7 +24,7 @@ public class SingleRunnableManager {
      *
      * @param allowed true if allowed, false if suspended
      */
-    public SingleRunnableManager(boolean allowed) {
+    public SingleRunnableManager(final boolean allowed) {
         state = allowed ? RunnableState.IDLE : RunnableState.SUSPENDED;
     }
 
