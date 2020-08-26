@@ -21,10 +21,18 @@ public class AsyncConcurrentTaskDriver {
     private volatile int tasksEnded;
     private volatile Integer maxRunningTasks;
 
+    /**
+     * Constructs with no limit to number of running tasks.
+     */
     public AsyncConcurrentTaskDriver() {
         this(null);
     }
 
+    /**
+     * Constructs with a specific limit to number of running tasks.
+     *
+     * @param maxRunningTasks maximum number of tasks that can run simultaneously
+     */
     public AsyncConcurrentTaskDriver(final Integer maxRunningTasks) {
         this.maxRunningTasks = maxRunningTasks;
     }
@@ -36,10 +44,20 @@ public class AsyncConcurrentTaskDriver {
         updateTasks();
     }
 
+    /**
+     * Adds listener to be notified when which tasks is running is changing.
+     *
+     * @param listener listener to be notified
+     */
     public void addListener(final AsyncConcurrentTasksListener listener) {
         listeners.add(listener);
     }
 
+    /**
+     * Removes listener added by {@link #addListener(AsyncConcurrentTasksListener)}.
+     *
+     * @param listener listener to remove
+     */
     public void removeListener(final AsyncConcurrentTasksListener listener) {
         listeners.remove(listener);
     }
