@@ -89,4 +89,15 @@ public class SingleRunnableManager {
                 break;
         }
     }
+
+    /**
+     * Wraps a runnable in this.
+     * When the return value of this method is run, <code>runnable</code> is only run, if this has not already been run.
+     *
+     * @param runnable runnable to wrap
+     * @return wrapped runnable
+     */
+    public Runnable wrap(final Runnable runnable) {
+        return () -> run(runnable);
+    }
 }

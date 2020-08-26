@@ -98,4 +98,19 @@ class SingleRunnableManagerTest {
         assertEquals(1, count1);
     }
 
+    @Test
+    void wrap() {
+        SingleRunnableManager manager = new SingleRunnableManager();
+        Runnable wrapped = manager.wrap(runnable1);
+        assertEquals(0, count1);
+
+        wrapped.run();
+        assertEquals(1, count1);
+
+        manager.run(wrapped);
+        manager.run(runnable2);
+        assertEquals(1, count1);
+        assertEquals(0, count2);
+    }
+
 }
