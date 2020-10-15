@@ -18,9 +18,11 @@ public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
     private final List<Runnable> queue = new ArrayList<>();
 
-    private volatile int tasksStarted;
-    private volatile int tasksEnded;
+    private volatile int tasksStarted = 0;
+    private volatile int tasksEnded = 0;
     private volatile Integer maxRunningTasks; // Null means no limit
+
+    private volatile boolean suspended = false;
 
     /**
      * Constructs with no limit to number of running tasks.
@@ -45,10 +47,10 @@ public class ConcurrentTaskDriver {
     }
 
     /**
-     * Stops starting new tasks.
-     * Currently running tasks are not affected.
+     * Clears the queue of tasks not yet started.
+     * Currently running tasks are unaffected.
      */
-    public void cancelQueuedTasks() {
+    public void clearQueue() {
         synchronized (this) {
             queue.clear();
         }
@@ -146,6 +148,54 @@ public class ConcurrentTaskDriver {
     }
 
     /**
+     * Prevents starting new tasks until {@link #resume()} is called.
+     */
+    public synchronized void suspend() {
+        suspended = true;
+    }
+
+    /**
+     * Prevents starting new tasks until {@link #resume()} is called.
+     * @param whenIdle called when no more tasks are running.
+     */
+    public void suspend(final Runnable whenIdle) {
+        boolean isAlreadyIdle = false;
+        synchronized (this) {
+            suspended = true;
+            if (getNumberOfRunningTasks() <= 0) {
+                isAlreadyIdle = true;
+            } else {
+                // Wait for tasks to finish
+                addListener(new ConcurrentTasksListener() {
+                    @Override
+                    public void onProgress(final int queued, final int running, final int finished) {
+                        if (running <= 0) {
+                            removeListener(this);
+                            whenIdle.run();
+                        }
+                    }
+                });
+            }
+        }
+
+        if (isAlreadyIdle) whenIdle.run();
+    }
+
+    /**
+     * Removes the prevention of starting new tasks caused by {@link #suspend()} or {@link #suspend(Runnable)}.
+     */
+    public void resume() {
+        synchronized (this) {
+            suspended = false;
+        }
+        updateTasks();
+    }
+
+    public boolean isSuspended() {
+        return suspended;
+    }
+
+    /**
      * Updates what tasks to run.
      */
     private void updateTasks() {
@@ -171,10 +221,12 @@ public class ConcurrentTaskDriver {
             numberOfRunningTasks = getNumberOfRunningTasks();
             numberOfFinishedTasks = getNumberOfFinishedTasks();
         }
-        listeners.forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
+
+        // Copy listeners to allow them to remove themselves here
+        new ArrayList<>(listeners).forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
     }
 
     private synchronized boolean allowedToStartTask() {
-        return maxRunningTasks == null || getNumberOfRunningTasks() < maxRunningTasks;
+        return (maxRunningTasks == null || getNumberOfRunningTasks() < maxRunningTasks) && !isSuspended();
     }
 }
