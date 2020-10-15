@@ -3,7 +3,7 @@ package com.github.trosenkrantz.sync.util.concurrency;
 /**
  * Listener to be notified when changes are made to which tasks are running.
  */
-public interface AsyncConcurrentTasksListener {
+public interface ConcurrentTasksListener {
 
     /**
      * Called, when a task has been added or completed.

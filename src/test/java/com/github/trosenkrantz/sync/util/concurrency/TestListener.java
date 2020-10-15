@@ -1,9 +1,9 @@
 package com.github.trosenkrantz.sync.util.concurrency;
 
 /**
- * Simple implementation of {@link AsyncConcurrentTasksListener} that stores latest progress.
+ * Simple implementation of {@link ConcurrentTasksListener} that stores latest progress.
  */
-public class TestListener implements AsyncConcurrentTasksListener {
+public class TestListener implements ConcurrentTasksListener {
     private int queued;
     private int running;
     private int finished;
