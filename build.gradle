@@ -3,7 +3,7 @@ plugins {
 }
 
 group 'com.github.trosenkrantz'
-version '1.0.1'
+version '1.0.2'
 
 project.sourceCompatibility = '1.8'
 project.targetCompatibility = '1.8'
