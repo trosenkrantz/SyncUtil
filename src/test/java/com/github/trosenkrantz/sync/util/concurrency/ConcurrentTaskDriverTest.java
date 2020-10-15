@@ -1,8 +1,9 @@
 package com.github.trosenkrantz.sync.util.concurrency;
 
-import com.sun.tools.javac.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 class ConcurrentTaskDriverTest {
     private static void assertTasks(final ConcurrentTaskDriver driver, final int expectedQueued, final int expectedRunning, final int expectedFinished) {
@@ -128,7 +129,7 @@ class ConcurrentTaskDriverTest {
     void clearQueue() {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver(1);
 
-        driver.queueAsynchronousTasks(List.of(() -> { }, () -> { }));
+        driver.queueAsynchronousTasks(Arrays.asList(() -> { }, () -> { }));
         assertTasks(driver, 1, 1, 0);
 
         driver.clearQueue();
@@ -152,7 +153,7 @@ class ConcurrentTaskDriverTest {
         // Arrange
 
         // Act
-        driver.queueSynchronousTasks(List.of(() -> { }, () -> {}));
+        driver.queueSynchronousTasks(Arrays.asList(() -> { }, () -> { }));
 
         // Assert
         assertTasks(driver, 0, 0, 2);
@@ -164,7 +165,7 @@ class ConcurrentTaskDriverTest {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver();
 
         // Act
-        driver.queueSynchronousTasks(List.of(() -> { }, () -> {}));
+        driver.queueSynchronousTasks(Arrays.asList(() -> { }, () -> { }));
 
         // Assert
         assertTasks(driver, 0, 0, 2);
@@ -173,7 +174,7 @@ class ConcurrentTaskDriverTest {
     @Test
     void suspend() {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver(2);
-        driver.queueAsynchronousTasks(List.of(() -> { }, () -> { }, () -> { }));
+        driver.queueAsynchronousTasks(Arrays.asList(() -> { }, () -> { }, () -> { }));
 
         driver.suspend();
         assertTasks(driver, 1, 2, 0);
@@ -194,7 +195,7 @@ class ConcurrentTaskDriverTest {
     @Test
     void suspendWithCallback() {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver(2);
-        driver.queueAsynchronousTasks(List.of(() -> { }, () -> { }, () -> { }));
+        driver.queueAsynchronousTasks(Arrays.asList(() -> { }, () -> { }, () -> { }));
         final int[] whenIdleCalledCount = {0};
         Runnable whenIdle = () -> whenIdleCalledCount[0]++;
 
@@ -221,7 +222,7 @@ class ConcurrentTaskDriverTest {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver(1);
 
         driver.suspend();
-        driver.queueAsynchronousTasks(List.of(() -> { }, () -> { }));
+        driver.queueAsynchronousTasks(Arrays.asList(() -> { }, () -> { }));
         assertTasks(driver, 2, 0, 0);
 
         driver.resume();
@@ -231,7 +232,7 @@ class ConcurrentTaskDriverTest {
     @Test
     void suspendMultipleTimes() {
         ConcurrentTaskDriver driver = new ConcurrentTaskDriver(1);
-        driver.queueAsynchronousTasks(List.of(() -> { }, () -> { }, () -> { }));
+        driver.queueAsynchronousTasks(Arrays.asList(() -> { }, () -> { }, () -> { }));
 
         driver.suspend();
         driver.onAsynchronousTaskDone();
