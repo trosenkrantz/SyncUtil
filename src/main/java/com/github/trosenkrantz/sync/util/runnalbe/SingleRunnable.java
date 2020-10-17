@@ -9,7 +9,6 @@ public class SingleRunnable extends SingleRunnableManager implements Runnable {
 
     /**
      * Constructs this.
-     *
      * @param runnable the runnable to run only once
      */
     public SingleRunnable(final Runnable runnable) {

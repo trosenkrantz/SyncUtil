@@ -247,4 +247,28 @@ class ConcurrentTaskDriverTest {
         driver.onAsynchronousTaskDone();
         assertTasks(driver, 1, 0, 2);
     }
+
+    @Test
+    void exceptionPassesThroughAsynchronousTaskAndTaskIsNotDone() {
+        ConcurrentTaskDriver driver = new ConcurrentTaskDriver();
+
+        Assertions.assertThrows(RuntimeException.class, () ->
+                driver.queueAsynchronousTask(() -> {
+                    throw new RuntimeException();
+                })
+        );
+        assertTasks(driver, 0, 1, 0);
+    }
+
+    @Test
+    void exceptionPassesThroughSynchronousTaskAndTaskIsDone() {
+        ConcurrentTaskDriver driver = new ConcurrentTaskDriver();
+
+        Assertions.assertThrows(RuntimeException.class, () ->
+                driver.queueSynchronousTask(() -> {
+                    throw new RuntimeException();
+                })
+        );
+        assertTasks(driver, 0, 0, 1);
+    }
 }

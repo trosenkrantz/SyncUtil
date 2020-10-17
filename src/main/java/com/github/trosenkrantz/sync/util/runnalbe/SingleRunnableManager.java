@@ -2,7 +2,7 @@ package com.github.trosenkrantz.sync.util.runnalbe;
 
 /**
  * A handler to only run once.
- * You specify at run-time what runnable to run.
+ * You specify at run-time what {@link #run(Runnable)} to run.
  * <p>
  * You can suspend this.
  * If you call {@link #run(Runnable)} while suspended, it will be scheduled to run once {@link #allow()} is called.
@@ -21,7 +21,6 @@ public class SingleRunnableManager {
 
     /**
      * Constructs this and specific if allowed or suspended.
-     *
      * @param allowed true if allowed, false if suspended
      */
     public SingleRunnableManager(final boolean allowed) {
@@ -31,7 +30,6 @@ public class SingleRunnableManager {
     /**
      * If this is the first call to this method in this instance, the runnable is run or scheduled (if suspended).
      * Otherwise, this method does nothing.
-     *
      * @param runnable the runnable
      */
     public synchronized void run(final Runnable runnable) {
@@ -39,7 +37,7 @@ public class SingleRunnableManager {
             switch (state) {
                 case IDLE:
                     state = RunnableState.RUN;
-                    break;
+                    break; // Break in order to run
                 case SUSPENDED:
                     scheduledRunnable = runnable;
                     state = RunnableState.SCHEDULED;
@@ -93,7 +91,6 @@ public class SingleRunnableManager {
     /**
      * Wraps a runnable in this.
      * When the return value of this method is run, <code>runnable</code> is only run, if this has not already been run.
-     *
      * @param runnable runnable to wrap
      * @return wrapped runnable
      */

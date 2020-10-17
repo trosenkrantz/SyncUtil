@@ -3,6 +3,7 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,16 +92,19 @@ public class ConcurrentTaskDriver {
 
     /**
      * Queues tasks.
-     * When the {@link Runnable#run()} of a task provided in this method returns, the task is considered done.
-     * Do not call {@link #onAsynchronousTaskDone()} for this task.
-     * @param tasks task to queue
+     * When the {@link Runnable#run()} of a task provided in this method returns or throws an exception, the task is considered done.
+     * Do not call {@link #onAsynchronousTaskDone()} for these tasks.
+     * @param tasks the tasks to queue
      */
     public void queueSynchronousTasks(final Collection<Runnable> tasks) {
         queueAsynchronousTasks(tasks.stream().map(task ->
                 (Runnable) () -> {
-                    // Act as an asynchronous task that finishes right when run returns
-                    task.run();
-                    onAsynchronousTaskDone();
+                    // Act as an asynchronous task that finishes right when run returns or throws an exception
+                    try {
+                        task.run();
+                    } finally {
+                        onAsynchronousTaskDone();
+                    }
                 }
         ).collect(Collectors.toList()));
     }
@@ -196,17 +200,12 @@ public class ConcurrentTaskDriver {
     }
 
     /**
-     * Updates what tasks to run.
+     * Updates what tasks to run, runs them and notifies listeners.
      */
     private void updateTasks() {
-        while (allowedToStartTask() && !queue.isEmpty()) {
-            Runnable task;
-            synchronized (this) {
-                task = queue.get(0);
-                queue.remove(0);
-                tasksStarted++;
-            }
-            task.run();
+        Optional<Runnable> nextTask;
+        while ((nextTask = getNextTask()).isPresent()) {
+            nextTask.get().run();
         }
 
         notifyListeners();
@@ -216,17 +215,30 @@ public class ConcurrentTaskDriver {
         int numberOfQueuedTasks;
         int numberOfRunningTasks;
         int numberOfFinishedTasks;
+        List<ConcurrentTasksListener> listenersCopy;
+
         synchronized (this) {
             numberOfQueuedTasks = getNumberOfQueuedTasks();
             numberOfRunningTasks = getNumberOfRunningTasks();
             numberOfFinishedTasks = getNumberOfFinishedTasks();
+
+            // Copy listeners to allow them to remove themselves while being notified
+            listenersCopy = new ArrayList<>(listeners);
         }
 
-        // Copy listeners to allow them to remove themselves here
-        new ArrayList<>(listeners).forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
+        listenersCopy.forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
     }
 
-    private synchronized boolean allowedToStartTask() {
-        return (maxRunningTasks == null || getNumberOfRunningTasks() < maxRunningTasks) && !isSuspended();
+    private synchronized Optional<Runnable> getNextTask() {
+        if (shouldStartNewTask()) {
+            tasksStarted++;
+            return Optional.of(queue.remove(0));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private synchronized boolean shouldStartNewTask() {
+        return (maxRunningTasks == null || getNumberOfRunningTasks() < maxRunningTasks) && !queue.isEmpty() && !isSuspended();
     }
 }
