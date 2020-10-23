@@ -1,4 +1,4 @@
-package com.github.trosenkrantz.sync.util.runnalbe;
+package com.github.trosenkrantz.sync.util.runnable;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

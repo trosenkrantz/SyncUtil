@@ -1,4 +1,4 @@
-package com.github.trosenkrantz.sync.util.runnalbe;
+package com.github.trosenkrantz.sync.util.runnable;
 
 /**
  * A handler to only run once.

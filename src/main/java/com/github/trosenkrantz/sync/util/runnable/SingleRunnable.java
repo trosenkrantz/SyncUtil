@@ -1,4 +1,4 @@
-package com.github.trosenkrantz.sync.util.runnalbe;
+package com.github.trosenkrantz.sync.util.runnable;
 
 /**
  * An object that only runs a runnable a single time.
