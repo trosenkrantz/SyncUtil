@@ -1,8 +1,9 @@
 package com.github.trosenkrantz.sync.util.concurrency;
 
+import com.github.trosenkrantz.sync.util.runnable.SingleRunnable;
+
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Driver for managing and keeping track of tasks that run concurrently.
@@ -45,6 +46,60 @@ public class ConcurrentTaskDriver {
     }
 
     /**
+     * Queues asynchronous task.
+     * @param task the task to queue
+     */
+    public void queue(final AsynchronousTask task) {
+        queueAsynchronous(Collections.singleton(task));
+    }
+
+    /**
+     * Queues asynchronous tasks.
+     * The tasks are queued in the order specified by the iterator of the specified collection.
+     * @param tasks the tasks to queue
+     */
+    public void queueAsynchronous(final Collection<AsynchronousTask> tasks) {
+        synchronized (this) {
+            queue.addAll(tasks.stream().map(task ->
+                    (Runnable) () -> task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone))
+            ).collect(Collectors.toList()));
+        }
+
+        updateTasks();
+    }
+
+    /**
+     * Queues a synchronous task.
+     * When the {@link SynchronousTask#run()} of the task returns or throws an exception, the task is considered done.
+     * @param task task to queue
+     */
+    public void queue(final SynchronousTask task) {
+        queueSynchronous(Collections.singleton(task));
+    }
+
+    /**
+     * Queues synchronous tasks.
+     * When the {@link SynchronousTask#run()} of a task provided here returns or throws an exception, the task is considered done.
+     * The tasks are queued in the order specified by the iterator of the specified collection.
+     * @param tasks the tasks to queue
+     */
+    public void queueSynchronous(final Collection<SynchronousTask> tasks) {
+        synchronized (this) {
+            queue.addAll(tasks.stream().map(task ->
+                    (Runnable) () -> {
+                        try {
+                            task.run();
+                        } finally {
+                            onTaskDone();
+                        }
+                    }
+            ).collect(Collectors.toList()));
+        }
+
+        updateTasks();
+    }
+
+    /**
      * Clears the queue of tasks not yet started.
      * Currently running tasks are unaffected.
      */
@@ -55,67 +110,11 @@ public class ConcurrentTaskDriver {
         notifyListeners();
     }
 
-    /**
-     * Queues a task.
-     * When the task is done, be sure to call {@link #onAsynchronousTaskDone()}.
-     * @param task the task to queue
-     */
-    public void queueAsynchronousTask(final Runnable task) {
-        queueAsynchronousTasks(Collections.singleton(task));
-    }
-
-    /**
-     * Queues tasks.
-     * Call {@link #onAsynchronousTaskDone()} whenever each task is done.
-     * The tasks are queued in the order specified by the iterator of the specified collection.
-     * @param tasks the tasks to queue
-     */
-    public void queueAsynchronousTasks(final Collection<Runnable> tasks) {
-        synchronized (this) {
-            this.queue.addAll(tasks);
-        }
-
-        updateTasks();
-    }
-
-    /**
-     * Should be called when a task attempt is done, even when failed.
-     */
-    public void onAsynchronousTaskDone() {
+    private void onTaskDone() {
         synchronized (this) {
             tasksEnded++;
         }
         updateTasks();
-    }
-
-    /**
-     * Queues a task.
-     * When the {@link Runnable#run()} of the task returns, the task is considered done.
-     * Do not call {@link #onAsynchronousTaskDone()} for this task.
-     * @param task task to queue
-     */
-    public void queueSynchronousTask(final Runnable task) {
-        queueSynchronousTasks(Collections.singleton(task));
-    }
-
-    /**
-     * Queues tasks.
-     * When the {@link Runnable#run()} of a task provided in this method returns or throws an exception, the task is considered done.
-     * Do not call {@link #onAsynchronousTaskDone()} for these tasks.
-     * The tasks are queued in the order specified by the iterator of the specified collection.
-     * @param tasks the tasks to queue
-     */
-    public void queueSynchronousTasks(final Collection<Runnable> tasks) {
-        queueAsynchronousTasks(tasks.stream().map(task ->
-                (Runnable) () -> {
-                    // Act as an asynchronous task that finishes right when run returns or throws an exception
-                    try {
-                        task.run();
-                    } finally {
-                        onAsynchronousTaskDone();
-                    }
-                }
-        ).collect(Collectors.toList()));
     }
 
     public synchronized int getNumberOfQueuedTasks() {
