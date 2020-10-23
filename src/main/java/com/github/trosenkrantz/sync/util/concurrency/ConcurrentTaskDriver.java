@@ -1,9 +1,6 @@
 package com.github.trosenkrantz.sync.util.concurrency;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +14,7 @@ import java.util.stream.Stream;
  */
 public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
-    private final List<Runnable> queue = new ArrayList<>();
+    private final Queue<Runnable> queue = new ArrayDeque<>();
 
     private volatile int tasksStarted = 0;
     private volatile int tasksEnded = 0;
@@ -59,8 +56,18 @@ public class ConcurrentTaskDriver {
     }
 
     /**
+     * Queues a task.
+     * When the task is done, be sure to call {@link #onAsynchronousTaskDone()}.
+     * @param task the task to queue
+     */
+    public void queueAsynchronousTask(final Runnable task) {
+        queueAsynchronousTasks(Collections.singleton(task));
+    }
+
+    /**
      * Queues tasks.
      * Call {@link #onAsynchronousTaskDone()} whenever each task is done.
+     * The tasks are queued in the order specified by the iterator of the specified collection.
      * @param tasks the tasks to queue
      */
     public void queueAsynchronousTasks(final Collection<Runnable> tasks) {
@@ -69,15 +76,6 @@ public class ConcurrentTaskDriver {
         }
 
         updateTasks();
-    }
-
-    /**
-     * Queues a task.
-     * When the task is done, be sure to call {@link #onAsynchronousTaskDone()}.
-     * @param task the task to queue
-     */
-    public void queueAsynchronousTask(final Runnable task) {
-        queueAsynchronousTasks(Stream.of(task).collect(Collectors.toList()));
     }
 
     /**
@@ -91,9 +89,20 @@ public class ConcurrentTaskDriver {
     }
 
     /**
+     * Queues a task.
+     * When the {@link Runnable#run()} of the task returns, the task is considered done.
+     * Do not call {@link #onAsynchronousTaskDone()} for this task.
+     * @param task task to queue
+     */
+    public void queueSynchronousTask(final Runnable task) {
+        queueSynchronousTasks(Collections.singleton(task));
+    }
+
+    /**
      * Queues tasks.
      * When the {@link Runnable#run()} of a task provided in this method returns or throws an exception, the task is considered done.
      * Do not call {@link #onAsynchronousTaskDone()} for these tasks.
+     * The tasks are queued in the order specified by the iterator of the specified collection.
      * @param tasks the tasks to queue
      */
     public void queueSynchronousTasks(final Collection<Runnable> tasks) {
@@ -107,16 +116,6 @@ public class ConcurrentTaskDriver {
                     }
                 }
         ).collect(Collectors.toList()));
-    }
-
-    /**
-     * Queues a task.
-     * When the {@link Runnable#run()} of the task returns, the task is considered done.
-     * Do not call {@link #onAsynchronousTaskDone()} for this task.
-     * @param task task to queue
-     */
-    public void queueSynchronousTask(final Runnable task) {
-        queueSynchronousTasks(Stream.of(task).collect(Collectors.toList()));
     }
 
     public synchronized int getNumberOfQueuedTasks() {
@@ -232,7 +231,7 @@ public class ConcurrentTaskDriver {
     private synchronized Optional<Runnable> getNextTask() {
         if (shouldStartNewTask()) {
             tasksStarted++;
-            return Optional.of(queue.remove(0));
+            return Optional.of(queue.remove());
         } else {
             return Optional.empty();
         }
