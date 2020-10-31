@@ -216,6 +216,8 @@ public class ConcurrentTaskDriver {
         List<ConcurrentTasksListener> listenersCopy;
 
         synchronized (this) {
+            if (listeners.isEmpty()) return;
+
             numberOfQueuedTasks = getNumberOfQueuedTasks();
             numberOfRunningTasks = getNumberOfRunningTasks();
             numberOfFinishedTasks = getNumberOfFinishedTasks();

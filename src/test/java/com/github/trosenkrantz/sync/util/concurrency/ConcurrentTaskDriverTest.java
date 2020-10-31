@@ -4,20 +4,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 class ConcurrentTaskDriverTest {
-    private AsynchronousTask asynchronousTask;
-    private List<Runnable> onDoneList;
     private ConcurrentTaskDriver driver;
+    private AsynchronousTaskTestHelper asynchronousTaskHelper;
+    private AsynchronousTask asynchronousTask;
 
     @BeforeEach
     void setUp() {
-        asynchronousTask = onDone -> onDoneList.add(onDone);
-        onDoneList = new ArrayList<>();
+        asynchronousTaskHelper = new AsynchronousTaskTestHelper();
+        asynchronousTask = asynchronousTaskHelper.getTask();
     }
 
     private void assertTasks(final int expectedQueued, final int expectedRunning, final int expectedFinished) {
@@ -32,8 +30,8 @@ class ConcurrentTaskDriverTest {
         Assertions.assertEquals(expectedFinished, listener.getFinished());
     }
 
-    private void finishAsynchronousTask() {
-        onDoneList.remove(0).run();
+    public void finishAsynchronousTask() {
+        asynchronousTaskHelper.finishTask();
     }
 
     @Test
