@@ -158,7 +158,7 @@ public class ConcurrentTaskDriver {
 
     /**
      * Prevents starting new tasks until {@link #resume()} is called.
-     * @param whenIdle called when no more tasks are running.
+     * @param whenIdle called when no more tasks are running, or immediately if no tasks are currently running
      */
     public void suspend(final Runnable whenIdle) {
         boolean isAlreadyIdle = false;
@@ -180,6 +180,7 @@ public class ConcurrentTaskDriver {
             }
         }
 
+        // Run the Runnable outside the synchronized block
         if (isAlreadyIdle) whenIdle.run();
     }
 

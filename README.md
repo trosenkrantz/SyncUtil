@@ -4,13 +4,13 @@ Utility for synchronisation in Java.
 
 [![trosenkrantz](https://circleci.com/gh/trosenkrantz/SyncUtil.svg?style=shield)](https://circleci.com/gh/trosenkrantz/SyncUtil)
 
-- Only run a `Runnable` once despite calling it from multiple threads simultaneously.
+- Only run a `Runnable` once despite calling it from multiple threads simultaneously
   - Dynamically decide which runnable to run
   - Suspend / resume
 - Drive execution of tasks
   - Both synchronous and asynchronous tasks
   - Listen to execution updates
-  - Dynamically throttle max number of simultaneous taks
+  - Dynamically throttle max number of simultaneous tasks
   - Suspend / resume
 - OSGi support
 

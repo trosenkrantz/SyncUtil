@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled
-public class ConcurrentTaskDriverLoadTest {
+class ConcurrentTaskDriverLoadTest {
     @Test
     void testLoad() {
         load(100000, 100000);
