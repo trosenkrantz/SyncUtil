@@ -1,2 +1,7 @@
-rootProject.name = 'sync-util'
+pluginManagement {
+    plugins {
+        id 'biz.aQute.bnd.builder' version '5.2.0' // Used to add OSGi support
+    }
+}
 
+rootProject.name = 'sync-util'

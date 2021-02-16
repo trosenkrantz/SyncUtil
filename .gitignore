@@ -12,6 +12,7 @@ out/
 # auto-import.
 .idea/compiler.xml
 .idea/jarRepositories.xml
+.idea/misc.xml
 .idea/*.iml
 
 .idea/**/gradle.xml
