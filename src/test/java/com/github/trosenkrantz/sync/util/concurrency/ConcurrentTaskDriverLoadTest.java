@@ -3,8 +3,6 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import java.util.concurrent.TimeUnit;
-
 class ConcurrentTaskDriverLoadTest extends ConcurrentTaskDriverTest {
 
     public static final int MAX_RUNNING_TASKS = 4;
