@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.trosenkrantz'
-version '1.0.5'
+version '1.0.6'
 
 project.sourceCompatibility = '1.8'
 project.targetCompatibility = '1.8'
@@ -14,8 +14,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
 }
 
 // Expose everything through OSGi

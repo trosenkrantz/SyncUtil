@@ -3,6 +3,7 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import com.github.trosenkrantz.sync.util.runnable.SingleRunnable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -18,7 +19,7 @@ public class ConcurrentTaskDriver {
     private final Queue<Runnable> queue = new ArrayDeque<>();
 
     private volatile int tasksStarted = 0;
-    private volatile int tasksEnded = 0;
+    private volatile int tasksFinished = 0;
     private volatile Integer maxRunningTasks; // Null means no limit
 
     private volatile boolean suspended = false;
@@ -69,6 +70,22 @@ public class ConcurrentTaskDriver {
     }
 
     /**
+     * Queues asynchronous tasks and notify when all these tasks are finished.
+     * The tasks are queued in the order specified by the iterator of the specified collection.
+     * @param tasks  the tasks to queue
+     * @param notify called when all tasks queued in this method are finished.
+     */
+    public void queueAsynchronous(final Collection<AsynchronousTask> tasks, final Runnable notify) {
+        AtomicInteger tasksNotFinished = new AtomicInteger(tasks.size());
+        queueAsynchronous(tasks.stream().map(task ->
+                (AsynchronousTask) onDone -> task.run(new SingleRunnable(() -> { // Wrap each task in another AsynchronousTask
+                    onDone.run();
+                    if (tasksNotFinished.decrementAndGet() == 0) notify.run(); // If all tasks are finished, notify
+                }))
+        ).collect(Collectors.toList()));
+    }
+
+    /**
      * Queues a synchronous task.
      * When the {@link SynchronousTask#run()} of the task returns or throws an exception, the task is considered done.
      * @param task task to queue
@@ -112,7 +129,7 @@ public class ConcurrentTaskDriver {
 
     private void onTaskDone() {
         synchronized (this) {
-            tasksEnded++;
+            tasksFinished++;
         }
         updateTasks();
     }
@@ -126,11 +143,11 @@ public class ConcurrentTaskDriver {
      * @return the number of tasks running
      */
     public synchronized int getNumberOfRunningTasks() {
-        return tasksStarted - tasksEnded;
+        return tasksStarted - tasksFinished;
     }
 
     public synchronized int getNumberOfFinishedTasks() {
-        return tasksEnded;
+        return tasksFinished;
     }
 
     /**

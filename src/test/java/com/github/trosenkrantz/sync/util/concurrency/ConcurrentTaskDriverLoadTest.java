@@ -1,33 +1,38 @@
 package com.github.trosenkrantz.sync.util.concurrency;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-@Disabled
-class ConcurrentTaskDriverLoadTest {
+import java.util.concurrent.TimeUnit;
+
+class ConcurrentTaskDriverLoadTest extends ConcurrentTaskDriverTest {
+
+    public static final int MAX_RUNNING_TASKS = 4;
+
     @Test
+    @Timeout(value = 8)
     void testLoad() {
-        load(100000, 100000);
+        load(1000, 100000);
     }
 
     private void load(final int size, final int iterations) {
-        ConcurrentTaskDriver driver = new ConcurrentTaskDriver(4);
-        AsynchronousTaskTestHelper TestHelper = new AsynchronousTaskTestHelper();
+        driver = new ConcurrentTaskDriver(MAX_RUNNING_TASKS);
         long start = System.currentTimeMillis();
 
         for (int i = 0; i < size; i++) {
-            driver.queue(TestHelper.getTask());
+            driver.queue(asynchronousTask);
         }
+        assertTasks(size - MAX_RUNNING_TASKS, MAX_RUNNING_TASKS, 0);
 
         for (int i = 0; i < iterations; i++) {
-            driver.queue(TestHelper.getTask());
-            TestHelper.finishTask();
+            driver.queue(asynchronousTask);
+            finishTask();
         }
+        assertTasks(size - MAX_RUNNING_TASKS, MAX_RUNNING_TASKS, iterations);
 
         for (int i = 0; i < size; i++) {
-            TestHelper.finishTask();
+            finishTask();
         }
-
-        System.out.println("Size = " + size + ", Iterations = " + iterations + ", time = " + (System.currentTimeMillis() - start) + " ms.");
+        assertTasks(0, 0, size + iterations);
     }
 }
