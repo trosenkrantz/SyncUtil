@@ -3,7 +3,6 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import com.github.trosenkrantz.sync.util.runnable.SingleRunnable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
-    private final Queue<Runnable> queue = new ArrayDeque<>();
+    private final Queue<TaskHandler> queue = new ArrayDeque<>();
 
     private volatile int tasksStarted = 0;
     private volatile int tasksFinished = 0;
@@ -47,73 +46,56 @@ public class ConcurrentTaskDriver {
     }
 
     /**
-     * Queues asynchronous task.
+     * Queues an asynchronous task.
      * @param task the task to queue
      */
     public void queue(final AsynchronousTask task) {
-        queueAsynchronous(Collections.singleton(task));
-    }
-
-    /**
-     * Queues asynchronous tasks.
-     * The tasks are queued in the order specified by the iterator of the specified collection.
-     * @param tasks the tasks to queue
-     */
-    public void queueAsynchronous(final Collection<AsynchronousTask> tasks) {
         synchronized (this) {
-            queue.addAll(tasks.stream().map(task ->
-                    (Runnable) () -> task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone))
-            ).collect(Collectors.toList()));
+            queue.add(toTaskHandler(task));
         }
 
         updateTasks();
-    }
-
-    /**
-     * Queues asynchronous tasks and notify when all these tasks are finished.
-     * The tasks are queued in the order specified by the iterator of the specified collection.
-     * @param tasks  the tasks to queue
-     * @param notify called when all tasks queued in this method are finished.
-     */
-    public void queueAsynchronous(final Collection<AsynchronousTask> tasks, final Runnable notify) {
-        AtomicInteger tasksNotFinished = new AtomicInteger(tasks.size());
-        queueAsynchronous(tasks.stream().map(task ->
-                (AsynchronousTask) onDone -> task.run(new SingleRunnable(() -> { // Wrap each task in another AsynchronousTask
-                    onDone.run();
-                    if (tasksNotFinished.decrementAndGet() == 0) notify.run(); // If all tasks are finished, notify
-                }))
-        ).collect(Collectors.toList()));
     }
 
     /**
      * Queues a synchronous task.
-     * When the {@link SynchronousTask#run()} of the task returns or throws an exception, the task is considered done.
      * @param task task to queue
      */
     public void queue(final SynchronousTask task) {
-        queueSynchronous(Collections.singleton(task));
+        synchronized (this) {
+            queue.add(toTaskHandler(task));
+        }
+
+        updateTasks();
     }
 
     /**
-     * Queues synchronous tasks.
-     * When the {@link SynchronousTask#run()} of a task provided here returns or throws an exception, the task is considered done.
-     * The tasks are queued in the order specified by the iterator of the specified collection.
+     * Queues a list of tasks.
+     * Queues them in the order they were added to the specified object.
      * @param tasks the tasks to queue
      */
-    public void queueSynchronous(final Collection<SynchronousTask> tasks) {
+    public void queue(final TaskList tasks) {
         synchronized (this) {
-            queue.addAll(tasks.stream().map(task ->
-                    (Runnable) () -> {
-                        try {
-                            task.run();
-                        } finally {
-                            onTaskDone();
-                        }
-                    }
+            queue.addAll(tasks.getTasks().stream().map(taskContainer ->
+                    taskContainer.apply(this::toTaskHandler, this::toTaskHandler)
             ).collect(Collectors.toList()));
         }
 
         updateTasks();
+    }
+
+    private TaskHandler toTaskHandler(final AsynchronousTask task) {
+        return () -> task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone));
+    }
+
+    private TaskHandler toTaskHandler(final SynchronousTask task) {
+        return () -> {
+            try {
+                task.run();
+            } finally {
+                onTaskDone();
+            }
+        };
     }
 
     /**
@@ -219,9 +201,9 @@ public class ConcurrentTaskDriver {
      * Updates what tasks to run, runs them and notifies listeners.
      */
     private void updateTasks() {
-        Optional<Runnable> nextTask;
+        Optional<TaskHandler> nextTask;
         while ((nextTask = getNextTask()).isPresent()) {
-            nextTask.get().run();
+            nextTask.get().startTask();
         }
 
         notifyListeners();
@@ -247,7 +229,7 @@ public class ConcurrentTaskDriver {
         listenersCopy.forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
     }
 
-    private synchronized Optional<Runnable> getNextTask() {
+    private synchronized Optional<TaskHandler> getNextTask() {
         if (shouldStartNewTask()) {
             tasksStarted++;
             return Optional.of(queue.remove());

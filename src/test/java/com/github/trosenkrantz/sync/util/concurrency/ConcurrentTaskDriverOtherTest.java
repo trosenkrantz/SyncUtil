@@ -3,7 +3,6 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
@@ -14,7 +13,7 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
         TestListener listener = new TestListener();
         driver.addListener(listener);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(listener, 1, 1, 0);
 
         finishTask();
@@ -29,7 +28,7 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
     void clearQueue() {
         driver = new ConcurrentTaskDriver(1);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(1, 1, 0);
 
         driver.clearQueue();
@@ -37,43 +36,6 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
 
         finishTask();
         assertTasks(0, 0, 1);
-    }
-
-    @Test
-    void queueSynchronousTask() {
-        driver = new ConcurrentTaskDriver();
-
-        driver.queue(
-                () -> assertTasks(0, 1, 0)
-        );
-        assertTasks(0, 0, 1);
-    }
-
-    @Test
-    void queueSynchronousTasksLimit1() {
-        // Arrange
-        driver = new ConcurrentTaskDriver(1);
-
-        // Act
-        driver.queueSynchronous(Arrays.asList(
-                () -> assertTasks(1, 1, 0),
-                () -> assertTasks(0, 1, 1)
-        ));
-
-        // Assert
-        assertTasks(0, 0, 2);
-    }
-
-    @Test
-    void queueSynchronousTasksNoLimit() {
-        // Arrange
-        driver = new ConcurrentTaskDriver();
-
-        // Act
-        driver.queueSynchronous(Arrays.asList(() -> { }, () -> { }));
-
-        // Assert
-        assertTasks(0, 0, 2);
     }
 
     @Test

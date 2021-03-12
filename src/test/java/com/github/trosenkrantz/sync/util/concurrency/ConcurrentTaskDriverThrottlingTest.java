@@ -2,14 +2,12 @@ package com.github.trosenkrantz.sync.util.concurrency;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
 class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     @Test
     void max1RunningTask() {
         driver = new ConcurrentTaskDriver(1);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(1, 1, 0);
 
         finishTask();
@@ -23,7 +21,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     void max2RunningTasks() {
         driver = new ConcurrentTaskDriver(2);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
         assertTasks(1, 2, 0);
 
         finishTask();
@@ -40,7 +38,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     void noMaxRunningTasks() {
         driver = new ConcurrentTaskDriver();
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(0, 2, 0);
 
         finishTask();
@@ -54,7 +52,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     void increaseMaxRunningTasks() {
         driver = new ConcurrentTaskDriver(1);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(1, 1, 0);
 
         driver.setMaxRunningTasks(2);
@@ -71,7 +69,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     void reduceMaxRunningTasks() {
         driver = new ConcurrentTaskDriver(2);
 
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
         assertTasks(1, 2, 0);
 
         driver.setMaxRunningTasks(1);

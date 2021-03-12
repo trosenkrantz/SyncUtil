@@ -3,14 +3,11 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
-public class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
-
+class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspend() {
         driver = new ConcurrentTaskDriver(2);
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
 
         driver.suspend();
         assertTasks(1, 2, 0);
@@ -31,7 +28,7 @@ public class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspendWithCallback() {
         driver = new ConcurrentTaskDriver(2);
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
         final int[] whenIdleCalledCount = {0};
         Runnable whenIdle = () -> whenIdleCalledCount[0]++;
 
@@ -58,7 +55,7 @@ public class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
         driver = new ConcurrentTaskDriver(1);
 
         driver.suspend();
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(2, 0, 0);
 
         driver.resume();
@@ -68,7 +65,7 @@ public class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspendMultipleTimes() {
         driver = new ConcurrentTaskDriver(1);
-        driver.queueAsynchronous(Arrays.asList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
 
         driver.suspend();
         finishTask();
