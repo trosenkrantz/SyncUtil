@@ -80,4 +80,18 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
         finishTask();
         assertTasks(1, 0, 2);
     }
+
+    @Test
+    void suspendWhileIdleAndGetCallbackImmediately() {
+        // Arrange
+        driver = new ConcurrentTaskDriver();
+        final int[] whenIdleCalledCount = {0};
+        Runnable whenIdle = () -> whenIdleCalledCount[0]++;
+
+        // Act
+        driver.suspend(whenIdle);
+
+        // Assert
+        Assertions.assertEquals(1, whenIdleCalledCount[0]);
+    }
 }

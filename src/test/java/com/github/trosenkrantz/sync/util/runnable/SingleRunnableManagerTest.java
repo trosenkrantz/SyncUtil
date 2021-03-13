@@ -19,15 +19,6 @@ class SingleRunnableManagerTest {
     }
 
     @Test
-    void run1Time() {
-        SingleRunnableManager manager = new SingleRunnableManager();
-
-        manager.run(runnable1);
-
-        assertEquals(1, count1);
-    }
-
-    @Test
     void run2Times() {
         SingleRunnableManager manager = new SingleRunnableManager();
 
@@ -64,7 +55,7 @@ class SingleRunnableManagerTest {
     }
 
     @Test
-    void suspendedFromStart() {
+    void scheduleWhileSuspended() {
         // Arrange
         SingleRunnableManager manager = new SingleRunnableManager(false);
 
@@ -72,6 +63,20 @@ class SingleRunnableManagerTest {
         manager.run(runnable1);
         assertEquals(0, count1);
         manager.allow();
+
+        // Assert
+        assertEquals(1, count1);
+    }
+
+    @Test
+    void allowAfterSuspended() {
+        // Arrange
+        SingleRunnableManager manager = new SingleRunnableManager(false);
+
+        // Act
+        assertEquals(0, count1);
+        manager.allow();
+        manager.run(runnable1);
 
         // Assert
         assertEquals(1, count1);
