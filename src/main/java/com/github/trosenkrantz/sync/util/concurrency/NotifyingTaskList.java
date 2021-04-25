@@ -42,8 +42,8 @@ public class NotifyingTaskList extends TaskList {
 
     /**
      * Gets the tasks added so far.
-     * When the tasks added so far are done, the notify is performed.
-     * If you later on add tasks, it has effect on the object returned here and has no effect on the notify.
+     * When the tasks returned by this method are done, the notify is performed.
+     * If you later on add tasks, it does not effect the object returned here and does not effect the notify.
      * @return tasks added so far
      */
     @Override

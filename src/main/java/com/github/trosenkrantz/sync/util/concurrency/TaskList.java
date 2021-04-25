@@ -2,13 +2,15 @@ package com.github.trosenkrantz.sync.util.concurrency;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * A collection of tasks ordered by when they were added.
  * This can contain a mix of {@link AsynchronousTask} and {@link SynchronousTask} objects.
  * You can use this to queue multiple tasks at once with {@link ConcurrentTaskDriver#queue(TaskList)}.
- * You can reuse the task list by queueing it again.
+ * You can reuse a {@link TaskList} by queueing it again.
+ * You can be notified when a list of tasks are done by using {@link NotifyingTaskList}.
  */
 public class TaskList {
     private final List<Task> tasks;
@@ -42,19 +44,19 @@ public class TaskList {
      * Adds asynchronous tasks.
      * @param tasks tasks to add
      */
-    public void add(final AsynchronousTask... tasks) {
-        Stream.of(tasks).forEach(task -> this.tasks.add(new Task(task)));
+    public final void add(final AsynchronousTask... tasks) {
+        this.tasks.addAll(Stream.of(tasks).map(Task::new).collect(Collectors.toList()));
     }
 
     /**
      * Adds synchronous tasks.
      * @param tasks tasks to add
      */
-    public void add(final SynchronousTask... tasks) {
-        Stream.of(tasks).forEach(task -> this.tasks.add(new Task(task)));
+    public final void add(final SynchronousTask... tasks) {
+        this.tasks.addAll(Stream.of(tasks).map(Task::new).collect(Collectors.toList()));
     }
 
     public List<Task> getTasks() {
-        return tasks;
+        return new ArrayList<>(tasks);
     }
 }
