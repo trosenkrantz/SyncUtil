@@ -1,6 +1,7 @@
 # SyncUtil
 
 Utility for synchronisation in Java.
+It is built for Java 8 or newer.
 
 [![trosenkrantz](https://circleci.com/gh/trosenkrantz/SyncUtil.svg?style=shield)](https://circleci.com/gh/trosenkrantz/SyncUtil)
 
@@ -15,31 +16,44 @@ Utility for synchronisation in Java.
 - OSGi support
 
 ## How to Use
-- I want to run a `Runnable` only once.
-  - I know the `Runnable` when setting up: See [`SingleRunnable`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnable.java).
-  - I want to dynamically decide which `Runnable` to run: See [`SingleRunnableManager`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnableManager.java).
-- I want to drive execution of tasks: See [`ConcurrentTaskDriver`](src/main/java/com/github/trosenkrantz/sync/util/concurrency/ConcurrentTaskDriver.java).
+1. Choose a release, usually the newest.
+2. Include the released JAR files in your project.
+   - `sync-util-<version>-sources.jar` is optional and will allow your IDE to display the source code, including JavaDoc.
+   - SyncUtil has no dependencies.
+3. Include `sync-util-version>.jar` in your build as a dependency.
 
 ## Examples
-Provide a timeout for some heavy work. `SingleRunnableManager` prevents race conditions.
+Provide a timeout for some heavy work. [`SingleRunnable`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnable.java)  prevents race conditions:
+```java
+SingleRunnable runnable = new SingleRunnable(this::onDone);
+ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+executor.schedule(runnable, 10, TimeUnit.SECONDS);
+
+// Heavy work
+
+runnable.run();
+```
+
+Same, but dynamically decide which `Runnable` to run with [`SingleRunnableManager`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnableManager.java):
 ```java
 SingleRunnableManager runnableManager = new SingleRunnableManager();
 ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
 executor.schedule(runnableManager.wrap(this::onTimeout), 10, TimeUnit.SECONDS);
 
-// Do heavy work
+// Heavy work
 
-runnableManager.run(this::onComplete);
+runnableManager.run(this::onSuccess);
 ```
 
-Execute asynchronous requests. `ConcurrentTaskDriver` ensures at most 8 ongoing requests at the same time.
+Execute asynchronous requests. [`ConcurrentTaskDriver`](src/main/java/com/github/trosenkrantz/sync/util/concurrency/ConcurrentTaskDriver.java) ensures at most 8 ongoing requests at the same time.
 ```java
 ConcurrentTaskDriver driver = new ConcurrentTaskDriver(8);
 requests.forEach(request -> driver.queue(onDone -> {
     request.execute(new ResponseHandler() {
         @Override
-        public void onCompleted() {
+        public void onSuccess() {
             onDone.run();
         }
 
