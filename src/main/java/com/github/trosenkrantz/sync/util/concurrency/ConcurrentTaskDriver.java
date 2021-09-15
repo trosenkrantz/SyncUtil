@@ -3,7 +3,6 @@ package com.github.trosenkrantz.sync.util.concurrency;
 import com.github.trosenkrantz.sync.util.runnable.SingleRunnable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Driver for managing and keeping track of tasks that run concurrently.
@@ -11,11 +10,11 @@ import java.util.stream.Collectors;
  * <p>
  * This driver does not use threading.
  * If you want to run tasks with high CPU usage, you should handle threading yourself.
- * You could do that by wrapping your tasks in {@link java.util.concurrent.ExecutorService#submit(Runnable)}.
+ * You could do that by wrapping your tasks in {@link ExecutorServiceTask}.
  */
 public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
-    private final Queue<TaskHandler> queue = new ArrayDeque<>();
+    private final Queue<Task> queue = new ArrayDeque<>();
 
     private volatile int tasksStarted = 0;
     private volatile int tasksFinished = 0;
@@ -51,7 +50,7 @@ public class ConcurrentTaskDriver {
      */
     public void queue(final AsynchronousTask task) {
         synchronized (this) {
-            queue.add(toTaskHandler(task));
+            queue.add(new Task(task));
         }
 
         updateTasks();
@@ -63,7 +62,7 @@ public class ConcurrentTaskDriver {
      */
     public void queue(final SynchronousTask task) {
         synchronized (this) {
-            queue.add(toTaskHandler(task));
+            queue.add(new Task(task));
         }
 
         updateTasks();
@@ -76,31 +75,31 @@ public class ConcurrentTaskDriver {
      */
     public void queue(final TaskList tasks) {
         synchronized (this) {
-            queue.addAll(tasks.getTasks().stream().map(taskContainer ->
-                    taskContainer.apply(this::toTaskHandler, this::toTaskHandler)
-            ).collect(Collectors.toList()));
+            queue.addAll(tasks.getTasks());
         }
 
         updateTasks();
     }
 
-    private TaskHandler toTaskHandler(final AsynchronousTask task) {
-        return () -> task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone));
+    private void startTask(final Task task) {
+        task.perform(this::startAsynchronousTask, this::startSynchronousTask);
     }
 
-    private TaskHandler toTaskHandler(final SynchronousTask task) {
-        return () -> {
-            try {
-                task.run();
-            } finally {
-                onTaskDone();
-            }
-        };
+    private void startAsynchronousTask(final AsynchronousTask task) {
+        task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone));
+    }
+
+    private void startSynchronousTask(final SynchronousTask task) {
+        try {
+            task.run();
+        } finally {
+            onTaskDone();
+        }
     }
 
     /**
      * Clears the queue of tasks not yet started.
-     * Currently running tasks are unaffected.
+     * Already running tasks are unaffected.
      */
     public void clearQueue() {
         synchronized (this) {
@@ -201,9 +200,9 @@ public class ConcurrentTaskDriver {
      * Updates what tasks to run, runs them and notifies listeners.
      */
     private void updateTasks() {
-        Optional<TaskHandler> nextTask;
+        Optional<Task> nextTask;
         while ((nextTask = getNextTask()).isPresent()) {
-            nextTask.get().startTask();
+            startTask(nextTask.get());
         }
 
         notifyListeners();
@@ -229,7 +228,7 @@ public class ConcurrentTaskDriver {
         listenersCopy.forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
     }
 
-    private synchronized Optional<TaskHandler> getNextTask() {
+    private synchronized Optional<Task> getNextTask() {
         if (shouldStartNewTask()) {
             tasksStarted++;
             return Optional.of(queue.remove());

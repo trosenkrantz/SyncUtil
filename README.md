@@ -19,8 +19,8 @@ It is built for Java 8 or newer.
 1. Choose a release, usually the newest.
 2. Include the released JAR files in your project.
    - `sync-util-<version>-sources.jar` is optional and will allow your IDE to display the source code, including JavaDoc.
-   - SyncUtil has no dependencies.
-3. Include `sync-util-version>.jar` in your build as a dependency.
+   - SyncUtil has no runtime dependencies.
+3. Include `sync-util-<version>.jar` in your build as a dependency.
 
 ## Examples
 Provide a timeout for some heavy work. [`SingleRunnable`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnable.java)  prevents race conditions:
