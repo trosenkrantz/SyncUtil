@@ -5,7 +5,7 @@ import com.github.trosenkrantz.sync.util.runnable.SingleRunnable;
 import java.util.*;
 
 /**
- * Driver for managing and keeping track of tasks that run concurrently.
+ * Driver for managing tasks that run concurrently.
  * You can queue tasks to the driver at any time.
  * <p>
  * This driver does not use threading.
@@ -14,30 +14,29 @@ import java.util.*;
  */
 public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
-    private final Queue<Task> queue = new ArrayDeque<>();
+    private final Queue<AsynchronousTask> queue = new ArrayDeque<>();
+    private Limit maxRunningTasks;
 
     private volatile int tasksStarted = 0;
     private volatile int tasksFinished = 0;
-    private volatile Integer maxRunningTasks; // Null means no limit
-
     private volatile boolean suspended = false;
 
     /**
      * Constructs with no limit to number of running tasks.
      */
     public ConcurrentTaskDriver() {
-        this(null);
+        this.maxRunningTasks = Limit.noLimit();
     }
 
     /**
      * Constructs with a specific limit to number of running tasks.
      * @param maxRunningTasks maximum number of tasks that can run simultaneously
      */
-    public ConcurrentTaskDriver(final Integer maxRunningTasks) {
-        this.maxRunningTasks = maxRunningTasks;
+    public ConcurrentTaskDriver(final int maxRunningTasks) {
+        this.maxRunningTasks = Limit.of(maxRunningTasks);
     }
 
-    public synchronized void setMaxRunningTasks(final Integer maxRunningTasks) {
+    public synchronized void setMaxRunningTasks(final Limit maxRunningTasks) {
         synchronized (this) {
             this.maxRunningTasks = maxRunningTasks;
         }
@@ -50,7 +49,7 @@ public class ConcurrentTaskDriver {
      */
     public void queue(final AsynchronousTask task) {
         synchronized (this) {
-            queue.add(new Task(task));
+            queue.add(task);
         }
 
         updateTasks();
@@ -61,11 +60,7 @@ public class ConcurrentTaskDriver {
      * @param task task to queue
      */
     public void queue(final SynchronousTask task) {
-        synchronized (this) {
-            queue.add(new Task(task));
-        }
-
-        updateTasks();
+        queue(TaskConverter.toAsynchronous(task)); // Treat as asynchronous to only handle one type of tasks
     }
 
     /**
@@ -81,20 +76,8 @@ public class ConcurrentTaskDriver {
         updateTasks();
     }
 
-    private void startTask(final Task task) {
-        task.perform(this::startAsynchronousTask, this::startSynchronousTask);
-    }
-
-    private void startAsynchronousTask(final AsynchronousTask task) {
+    private void startTask(final AsynchronousTask task) {
         task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone));
-    }
-
-    private void startSynchronousTask(final SynchronousTask task) {
-        try {
-            task.run();
-        } finally {
-            onTaskDone();
-        }
     }
 
     /**
@@ -161,7 +144,7 @@ public class ConcurrentTaskDriver {
     public void suspend(final Runnable whenIdle) {
         boolean isAlreadyIdle = false;
         synchronized (this) {
-            suspended = true;
+            suspend();
             if (getNumberOfRunningTasks() <= 0) {
                 isAlreadyIdle = true;
             } else {
@@ -200,7 +183,7 @@ public class ConcurrentTaskDriver {
      * Updates what tasks to run, runs them and notifies listeners.
      */
     private void updateTasks() {
-        Optional<Task> nextTask;
+        Optional<AsynchronousTask> nextTask;
         while ((nextTask = getNextTask()).isPresent()) {
             startTask(nextTask.get());
         }
@@ -209,26 +192,18 @@ public class ConcurrentTaskDriver {
     }
 
     private void notifyListeners() {
-        int numberOfQueuedTasks;
-        int numberOfRunningTasks;
-        int numberOfFinishedTasks;
-        List<ConcurrentTasksListener> listenersCopy;
+        // Copy listeners to allow modification while iterating, e.g., allow listeners to remove themselves while being notified
+        List<ConcurrentTasksListener> listenersCopy = new ArrayList<>(listeners);
+        if (listenersCopy.isEmpty()) return;
 
-        synchronized (this) {
-            if (listeners.isEmpty()) return;
-
-            numberOfQueuedTasks = getNumberOfQueuedTasks();
-            numberOfRunningTasks = getNumberOfRunningTasks();
-            numberOfFinishedTasks = getNumberOfFinishedTasks();
-
-            // Copy listeners to allow them to remove themselves while being notified
-            listenersCopy = new ArrayList<>(listeners);
-        }
+        int numberOfQueuedTasks = getNumberOfQueuedTasks();
+        int numberOfRunningTasks = getNumberOfRunningTasks();
+        int numberOfFinishedTasks = getNumberOfFinishedTasks();
 
         listenersCopy.forEach(listener -> listener.onProgress(numberOfQueuedTasks, numberOfRunningTasks, numberOfFinishedTasks));
     }
 
-    private synchronized Optional<Task> getNextTask() {
+    private synchronized Optional<AsynchronousTask> getNextTask() {
         if (shouldStartNewTask()) {
             tasksStarted++;
             return Optional.of(queue.remove());
@@ -238,6 +213,6 @@ public class ConcurrentTaskDriver {
     }
 
     private synchronized boolean shouldStartNewTask() {
-        return (maxRunningTasks == null || getNumberOfRunningTasks() < maxRunningTasks) && !queue.isEmpty() && !isSuspended();
+        return maxRunningTasks.isGreaterThan(getNumberOfRunningTasks()) && !queue.isEmpty() && !isSuspended();
     }
 }

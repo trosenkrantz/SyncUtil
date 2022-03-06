@@ -47,32 +47,16 @@ public class NotifyingTaskList extends TaskList {
      * @return tasks added so far
      */
     @Override
-    public List<Task> getTasks() {
-        List<Task> tasks = super.getTasks();
+    public List<AsynchronousTask> getTasks() {
+        List<AsynchronousTask> tasks = super.getTasks();
         AtomicInteger tasksNotFinished = new AtomicInteger(tasks.size());
-        return tasks.stream()
-                .map(taskContainer -> taskContainer.apply(task -> wrap(task, tasksNotFinished), task -> wrap(task, tasksNotFinished)))
-                .collect(Collectors.toList());
+        return tasks.stream().map(task -> wrap(task, tasksNotFinished)).collect(Collectors.toList());
     }
 
-    private Task wrap(final AsynchronousTask task, final AtomicInteger tasksNotFinished) {
-        return new Task(onDone -> task.run(new SingleRunnable(() -> {
-            notifyIfAllDone(tasksNotFinished);
+    private AsynchronousTask wrap(final AsynchronousTask task, final AtomicInteger tasksNotFinished) {
+        return onDone -> task.run(new SingleRunnable(() -> {
+            if (tasksNotFinished.decrementAndGet() == 0) notify.run();
             onDone.run();
-        })));
-    }
-
-    private Task wrap(final SynchronousTask task, final AtomicInteger tasksNotFinished) {
-        return new Task(() -> {
-            try {
-                task.run();
-            } finally {
-                notifyIfAllDone(tasksNotFinished);
-            }
-        });
-    }
-
-    private void notifyIfAllDone(final AtomicInteger tasksNotFinished) {
-        if (tasksNotFinished.decrementAndGet() == 0) notify.run();
+        }));
     }
 }

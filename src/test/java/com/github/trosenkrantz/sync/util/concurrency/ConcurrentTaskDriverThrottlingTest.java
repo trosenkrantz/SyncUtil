@@ -55,7 +55,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
         driver.queue(new TaskList(asynchronousTask, asynchronousTask));
         assertTasks(1, 1, 0);
 
-        driver.setMaxRunningTasks(2);
+        driver.setMaxRunningTasks(Limit.of(2));
         assertTasks(0, 2, 0);
 
         finishTask();
@@ -72,7 +72,7 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
         driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
         assertTasks(1, 2, 0);
 
-        driver.setMaxRunningTasks(1);
+        driver.setMaxRunningTasks(Limit.of(1));
         assertTasks(1, 2, 0);
 
         finishTask();
