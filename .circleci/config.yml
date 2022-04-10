@@ -10,7 +10,6 @@ jobs:
           key: gradle-{{ checksum "build.gradle" }}--{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
       - run: chmod +x gradlew
       - run: ./gradlew build
-      - run: ./gradlew sources
       - save_cache:
           paths:
             - ~/.gradle

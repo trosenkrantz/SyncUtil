@@ -1,9 +1,11 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
     <JavaCodeStyleSettings>
+      <option name="GENERATE_FINAL_PARAMETERS" value="true" />
       <option name="JD_ADD_BLANK_AFTER_DESCRIPTION" value="false" />
     </JavaCodeStyleSettings>
     <codeStyleSettings language="JAVA">
+      <option name="RIGHT_MARGIN" value="256" />
       <option name="KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE" value="true" />
     </codeStyleSettings>
   </code_scheme>

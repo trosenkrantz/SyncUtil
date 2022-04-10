@@ -13,7 +13,7 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
         TestListener listener = new TestListener();
         driver.addListener(listener);
 
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(listener, 1, 1, 0);
 
         finishTask();
@@ -28,7 +28,7 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
     void clearQueue() {
         driver = new ConcurrentTaskDriver(1);
 
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(1, 1, 0);
 
         driver.clearQueue();

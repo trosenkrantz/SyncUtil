@@ -17,7 +17,7 @@ public class TaskConverter {
     /**
      * Converts a synchronous task to an asynchronous one.
      * @param task the task to convert
-     * @return the converted class
+     * @return the converted task
      */
     public static AsynchronousTask toAsynchronous(final SynchronousTask task) {
         return onDone -> {
@@ -31,9 +31,9 @@ public class TaskConverter {
 
     /**
      * Converts an asynchronous task to a synchronous one.
-     * The resulting task blocks the running thread until the onDone on the inner asynchronous task is called.
+     * The resulting task blocks the running thread until the onDone on the inner asynchronous task is called, or until the thread is interrupted.
      * @param task the task to convert
-     * @return the converted class
+     * @return the converted task
      */
     public static SynchronousTask toSynchronous(final AsynchronousTask task) {
         return () -> {

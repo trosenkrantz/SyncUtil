@@ -23,9 +23,9 @@ abstract class ConcurrentTaskDriverTest {
     }
 
     public void assertTasks(final int expectedQueued, final int expectedRunning, final int expectedFinished) {
-        Assertions.assertEquals(expectedQueued, driver.getNumberOfQueuedTasks());
-        Assertions.assertEquals(expectedRunning, driver.getNumberOfRunningTasks());
-        Assertions.assertEquals(expectedFinished, driver.getNumberOfFinishedTasks());
+        Assertions.assertEquals(expectedQueued, driver.getNumberOfQueuedTasks(), "Wrong number of queued tasks");
+        Assertions.assertEquals(expectedRunning, driver.getNumberOfRunningTasks(), "Wrong number of running tasks");
+        Assertions.assertEquals(expectedFinished, driver.getNumberOfFinishedTasks(), "Wrong number of finished tasks");
     }
 
     @BeforeEach

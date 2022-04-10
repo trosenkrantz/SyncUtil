@@ -7,7 +7,7 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspend() {
         driver = new ConcurrentTaskDriver(2);
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
 
         driver.suspend();
         assertTasks(1, 2, 0);
@@ -28,7 +28,7 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspendWithCallback() {
         driver = new ConcurrentTaskDriver(2);
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
         final int[] whenIdleCalledCount = {0};
         Runnable whenIdle = () -> whenIdleCalledCount[0]++;
 
@@ -55,7 +55,7 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
         driver = new ConcurrentTaskDriver(1);
 
         driver.suspend();
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(2, 0, 0);
 
         driver.resume();
@@ -65,7 +65,7 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspendMultipleTimes() {
         driver = new ConcurrentTaskDriver(1);
-        driver.queue(new TaskList(asynchronousTask, asynchronousTask, asynchronousTask));
+        driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
 
         driver.suspend();
         finishTask();

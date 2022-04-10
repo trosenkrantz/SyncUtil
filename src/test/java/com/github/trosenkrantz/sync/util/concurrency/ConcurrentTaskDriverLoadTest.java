@@ -4,18 +4,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 class ConcurrentTaskDriverLoadTest extends ConcurrentTaskDriverTest {
-
     public static final int MAX_RUNNING_TASKS = 4;
 
     @Test
     @Timeout(value = 8)
     void testLoad() {
-        load(1000, 100000);
+        load(1000, 10000000);
     }
 
     private void load(final int size, final int iterations) {
         driver = new ConcurrentTaskDriver(MAX_RUNNING_TASKS);
-        long start = System.currentTimeMillis();
 
         for (int i = 0; i < size; i++) {
             driver.queue(asynchronousTask);

@@ -44,40 +44,27 @@ public class ConcurrentTaskDriver {
     }
 
     /**
-     * Queues an asynchronous task.
-     * @param task the task to queue
-     */
-    public void queue(final AsynchronousTask task) {
-        synchronized (this) {
-            queue.add(task);
-        }
-
-        updateTasks();
-    }
-
-    /**
-     * Queues a synchronous task.
-     * @param task task to queue
-     */
-    public void queue(final SynchronousTask task) {
-        queue(TaskConverter.toAsynchronous(task)); // Treat as asynchronous to only handle one type of tasks
-    }
-
-    /**
-     * Queues a list of tasks.
-     * Queues them in the order they were added to the specified object.
+     * Queues one of more asynchronous tasks.
      * @param tasks the tasks to queue
      */
-    public void queue(final TaskList tasks) {
+    public void queue(final AsynchronousTask... tasks) {
         synchronized (this) {
-            queue.addAll(tasks.getTasks());
+            Collections.addAll(queue, tasks);
         }
 
         updateTasks();
+    }
+
+    /**
+     * Queues one or more synchronous tasks.
+     * @param task task to queue
+     */
+    public void queue(final SynchronousTask... task) {
+        queue(Arrays.stream(task).map(TaskConverter::toAsynchronous).toArray(AsynchronousTask[]::new)); // Treat as asynchronous to only handle one type of tasks
     }
 
     private void startTask(final AsynchronousTask task) {
-        task.run(new SingleRunnable(ConcurrentTaskDriver.this::onTaskDone));
+        task.run(new SingleRunnable(this::onTaskDone));
     }
 
     /**

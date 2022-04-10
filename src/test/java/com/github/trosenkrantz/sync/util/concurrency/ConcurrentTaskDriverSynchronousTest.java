@@ -19,10 +19,10 @@ class ConcurrentTaskDriverSynchronousTest extends ConcurrentTaskDriverTest {
         driver = new ConcurrentTaskDriver(1);
 
         // Act
-        driver.queue(new TaskList(
+        driver.queue(
                 () -> assertTasks(1, 1, 0),
                 () -> assertTasks(0, 1, 1)
-        ));
+        );
 
         // Assert
         assertTasks(0, 0, 2);
@@ -34,10 +34,10 @@ class ConcurrentTaskDriverSynchronousTest extends ConcurrentTaskDriverTest {
         driver = new ConcurrentTaskDriver();
 
         // Act
-        driver.queue(new TaskList(
+        driver.queue(
                 () -> {},
                 () -> {}
-        ));
+        );
 
         // Assert
         assertTasks(0, 0, 2);
