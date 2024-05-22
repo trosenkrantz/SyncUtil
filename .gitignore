@@ -1,36 +1,12 @@
 ## IDEA
 
-# Output of IDEA
-out/
-
-.idea/**/workspace.xml
-.idea/uiDesigner.xml
-
-# Gradle with auto-import
-.idea/compiler.xml
-.idea/jarRepositories.xml
-.idea/modules.xml
-.idea/modules
-.idea/misc.xml
-.idea/*.iml
-
-.idea/**/gradle.xml
-.idea/**/libraries
-.idea/libraries-with-intellij-classes.xml
+.idea/
 
 
 ## Gradle
 
-.gradle
+.gradle/
 
 # Output of Gradle
 **/build/
 !src/**/build/
-
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
-
-## Sonar
-
-.idea/sonarlint/
