@@ -9,7 +9,8 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
 
     @Test
     void listener() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
         TestListener listener = new TestListener();
         driver.addListener(listener);
 
@@ -26,7 +27,8 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
 
     @Test
     void clearQueue() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
 
         driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(1, 1, 0);
@@ -66,13 +68,13 @@ class ConcurrentTaskDriverOtherTest extends ConcurrentTaskDriverTest {
     void finishingAsynchronousTaskMultipleTimesHasNoEffect() {
         // Arrange
         driver = new ConcurrentTaskDriver();
-        AtomicReference<Runnable> finish = new AtomicReference<>();
+        AtomicReference<Runnable> onDone = new AtomicReference<>();
 
         // Act
-        driver.queue(finish::set);
-        finish.get().run();
-        finish.get().run();
-        finish.get().run();
+        driver.queue(onDone::set);
+        onDone.get().run();
+        onDone.get().run();
+        onDone.get().run();
 
         // Assert
         assertTasks(0, 0, 1);

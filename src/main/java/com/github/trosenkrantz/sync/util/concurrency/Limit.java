@@ -34,7 +34,7 @@ public class Limit {
 
     /**
      * Gets if this is a concrete limit (not limitless).
-     * @return true iff a concrete limit
+     * @return true if and only if a concrete limit
      */
     public boolean hasLimit() {
         return value != null;
@@ -54,9 +54,39 @@ public class Limit {
      * Gets if this limit is greater than a specified value.
      * If this is limitless, this always returns true.
      * @param value the specified value
-     * @return true iff greater than
+     * @return true if and only if this limit is greater than the specified value
      */
     public boolean isGreaterThan(final int value) {
         return this.value == null || this.value > value;
+    }
+
+    /**
+     * Checks if this limit is less than a specified value.
+     * If this is limitless, this always returns false.
+     * @param value the specified value
+     * @return true if and only if this limit is less than the specified value
+     */
+    public boolean isLessThan(final int value) {
+        return this.value != null && this.value < value;
+    }
+
+    /**
+     * Checks if this limit is greater than or equal to a specified value.
+     * If this is limitless, this always returns true.
+     * @param value the specified value
+     * @return true if and only if this limit is greater than or equal to the specified value
+     */
+    public boolean isGreaterThanOrEquals(final int value) {
+        return this.value == null || this.value >= value;
+    }
+
+    /**
+     * Checks if this limit is less than or equal to a specified value.
+     * If this is limitless, this always returns false.
+     * @param value the specified value
+     * @return true if and only if this limit is less than or equal to the specified value
+     */
+    public boolean isLessThanOrEquals(final int value) {
+        return this.value != null && this.value <= value;
     }
 }

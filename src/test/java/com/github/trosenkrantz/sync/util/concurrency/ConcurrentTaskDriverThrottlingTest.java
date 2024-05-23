@@ -5,7 +5,8 @@ import org.junit.jupiter.api.Test;
 class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
     @Test
     void max1RunningTask() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
 
         driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(1, 1, 0);
@@ -19,7 +20,8 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
 
     @Test
     void max2RunningTasks() {
-        driver = new ConcurrentTaskDriver(2);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(2));
 
         driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
         assertTasks(1, 2, 0);
@@ -50,7 +52,8 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
 
     @Test
     void increaseMaxRunningTasks() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
 
         driver.queue(asynchronousTask, asynchronousTask);
         assertTasks(1, 1, 0);
@@ -67,7 +70,8 @@ class ConcurrentTaskDriverThrottlingTest extends ConcurrentTaskDriverTest {
 
     @Test
     void reduceMaxRunningTasks() {
-        driver = new ConcurrentTaskDriver(2);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(2));
 
         driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
         assertTasks(1, 2, 0);

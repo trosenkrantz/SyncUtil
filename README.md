@@ -3,8 +3,6 @@
 Utility for synchronisation in Java.
 It is built for Java 8 or newer.
 
-[![trosenkrantz](https://circleci.com/gh/trosenkrantz/SyncUtil.svg?style=shield)](https://circleci.com/gh/trosenkrantz/SyncUtil)
-
 - Only run a `Runnable` once despite calling it from multiple threads simultaneously
   - Dynamically decide which `Runnable` to run
   - Suspend / resume
@@ -49,7 +47,8 @@ runnableManager.run(this::onSuccess);
 
 Execute asynchronous requests. [`ConcurrentTaskDriver`](src/main/java/com/github/trosenkrantz/sync/util/concurrency/ConcurrentTaskDriver.java) ensures at most 8 ongoing requests at the same time.
 ```java
-ConcurrentTaskDriver driver = new ConcurrentTaskDriver(8);
+ConcurrentTaskDriver driver = new ConcurrentTaskDriver();
+driver.setMaxRunningTasks(8);
 requests.forEach(request -> driver.queue(onDone -> {
     request.execute(new ResponseHandler() {
         @Override

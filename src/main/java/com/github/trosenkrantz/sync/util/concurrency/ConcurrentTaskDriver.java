@@ -14,7 +14,8 @@ import java.util.*;
  */
 public class ConcurrentTaskDriver {
     private final List<ConcurrentTasksListener> listeners = new ArrayList<>();
-    private final Queue<AsynchronousTask> queue = new ArrayDeque<>();
+    private final Queue<AsynchronousTask> fifoQueue = new ArrayDeque<>();
+    private final Queue<PriorityAsynchronousTask> priorityQueue = new PriorityQueue<>();
     private Limit maxRunningTasks;
 
     private volatile int tasksStarted = 0;
@@ -29,14 +30,10 @@ public class ConcurrentTaskDriver {
     }
 
     /**
-     * Constructs with a specific limit to number of running tasks.
-     * @param maxRunningTasks maximum number of tasks that can run simultaneously
+     * Limits the number of tasks allowed to run simultaneously.
+     * @param maxRunningTasks limit to set
      */
-    public ConcurrentTaskDriver(final int maxRunningTasks) {
-        this.maxRunningTasks = Limit.of(maxRunningTasks);
-    }
-
-    public synchronized void setMaxRunningTasks(final Limit maxRunningTasks) {
+    public void setMaxRunningTasks(final Limit maxRunningTasks) {
         synchronized (this) {
             this.maxRunningTasks = maxRunningTasks;
         }
@@ -45,11 +42,25 @@ public class ConcurrentTaskDriver {
 
     /**
      * Queues one of more asynchronous tasks.
-     * @param tasks the tasks to queue
+     * @param tasks tasks to queue
      */
     public void queue(final AsynchronousTask... tasks) {
         synchronized (this) {
-            Collections.addAll(queue, tasks);
+            Collections.addAll(fifoQueue, tasks);
+        }
+
+        updateTasks();
+    }
+
+    /**
+     * Queues one of more asynchronous tasks.
+     * @param tasks tasks to queue
+     */
+    public void queue(final int priority, final AsynchronousTask... tasks) {
+        synchronized (this) {
+            for (AsynchronousTask task : tasks) {
+                priorityQueue.add(new PriorityAsynchronousTask(task, priority));
+            }
         }
 
         updateTasks();
@@ -57,10 +68,18 @@ public class ConcurrentTaskDriver {
 
     /**
      * Queues one or more synchronous tasks.
-     * @param task task to queue
+     * @param tasks tasks to queue
      */
-    public void queue(final SynchronousTask... task) {
-        queue(Arrays.stream(task).map(TaskConverter::toAsynchronous).toArray(AsynchronousTask[]::new)); // Treat as asynchronous to only handle one type of tasks
+    public void queue(final SynchronousTask... tasks) {
+        queue(Arrays.stream(tasks).map(TaskConverter::toAsynchronous).toArray(AsynchronousTask[]::new)); // Treat as asynchronous to only handle one type of tasks
+    }
+
+    /**
+     * Queues one or more synchronous tasks.
+     * @param tasks tasks to queue
+     */
+    public void queue(final int priority, final SynchronousTask... tasks) {
+        queue(priority, Arrays.stream(tasks).map(TaskConverter::toAsynchronous).toArray(AsynchronousTask[]::new)); // Treat as asynchronous to only handle one type of tasks
     }
 
     private void startTask(final AsynchronousTask task) {
@@ -73,7 +92,8 @@ public class ConcurrentTaskDriver {
      */
     public void clearQueue() {
         synchronized (this) {
-            queue.clear();
+            fifoQueue.clear();
+            priorityQueue.clear();
         }
         notifyListeners();
     }
@@ -86,7 +106,7 @@ public class ConcurrentTaskDriver {
     }
 
     public synchronized int getNumberOfQueuedTasks() {
-        return queue.size();
+        return fifoQueue.size() + priorityQueue.size();
     }
 
     /**
@@ -191,15 +211,18 @@ public class ConcurrentTaskDriver {
     }
 
     private synchronized Optional<AsynchronousTask> getNextTask() {
-        if (shouldStartNewTask()) {
+        if (isSuspended()) {
+            return Optional.empty();
+        } else if (maxRunningTasks.isLessThanOrEquals(getNumberOfRunningTasks())) { // We are already running max allowed running tasks
+            return Optional.empty();
+        } else if (!priorityQueue.isEmpty()) {
             tasksStarted++;
-            return Optional.of(queue.remove());
+            return Optional.of(priorityQueue.remove().getTask());
+        } else if (!fifoQueue.isEmpty()) {
+            tasksStarted++;
+            return Optional.of(fifoQueue.remove());
         } else {
             return Optional.empty();
         }
-    }
-
-    private synchronized boolean shouldStartNewTask() {
-        return maxRunningTasks.isGreaterThan(getNumberOfRunningTasks()) && !queue.isEmpty() && !isSuspended();
     }
 }

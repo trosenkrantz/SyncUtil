@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
     @Test
     void suspend() {
-        driver = new ConcurrentTaskDriver(2);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(2));
         driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
 
         driver.suspend();
@@ -27,7 +28,8 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
 
     @Test
     void suspendWithCallback() {
-        driver = new ConcurrentTaskDriver(2);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(2));
         driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
         final int[] whenIdleCalledCount = {0};
         Runnable whenIdle = () -> whenIdleCalledCount[0]++;
@@ -52,7 +54,8 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
 
     @Test
     void suspendFromStart() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
 
         driver.suspend();
         driver.queue(asynchronousTask, asynchronousTask);
@@ -64,7 +67,8 @@ class ConcurrentTaskDriverSuspendTest extends ConcurrentTaskDriverTest {
 
     @Test
     void suspendMultipleTimes() {
-        driver = new ConcurrentTaskDriver(1);
+        driver = new ConcurrentTaskDriver();
+        driver.setMaxRunningTasks(Limit.of(1));
         driver.queue(asynchronousTask, asynchronousTask, asynchronousTask);
 
         driver.suspend();
