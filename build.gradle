@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.github.trosenkrantz'
-version '1.0.7'
+version '1.0.8'
 
 project.sourceCompatibility = '1.8'
 project.targetCompatibility = '1.8'
@@ -22,7 +22,7 @@ dependencies {
 // Expose everything through OSGi
 jar.bnd('-exportcontents': 'com.github.trosenkrantz.sync.util.*')
 
-task sources(type:Jar){
+task sources(type: Jar) {
     from sourceSets.main.allSource
     archiveClassifier.set("sources")
 }
