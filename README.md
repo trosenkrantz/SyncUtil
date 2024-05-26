@@ -11,6 +11,9 @@ It is built for Java 8 or newer.
   - Listen to execution updates
   - Dynamically throttle max number of simultaneous tasks
   - Suspend / resume
+  - Define task dependencies
+  - Repeat tasks
+  - Define priority of tasks
 - OSGi support
 
 ## How to Use
