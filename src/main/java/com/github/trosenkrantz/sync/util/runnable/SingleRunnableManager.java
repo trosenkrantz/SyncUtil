@@ -45,6 +45,8 @@ public class SingleRunnableManager {
                 case SCHEDULED:
                 case RUN:
                     return;
+                default:
+                    throw new IllegalStateException("Unexpected state " + state);
             }
         }
 
@@ -67,6 +69,8 @@ public class SingleRunnableManager {
                 case SCHEDULED:
                     state = RunnableState.RUN;
                     break; // Break in order to run
+                default:
+                    throw new IllegalStateException("Unexpected state " + state);
             }
         }
 
@@ -85,6 +89,8 @@ public class SingleRunnableManager {
             case RUN:
             case SCHEDULED:
                 break;
+            default:
+                throw new IllegalStateException("Unexpected state " + state);
         }
     }
 
