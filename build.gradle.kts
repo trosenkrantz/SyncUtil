@@ -1,20 +1,45 @@
 plugins {
     java
     alias(libs.plugins.bnd) // To add OSGi support
+    alias(libs.plugins.errorprone) // To be able to apply Error Prone for lint checking
 }
 
-version = "1.0.8"
+allprojects {
+    version = "1.0.8"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(8))
-        vendor.set(JvmVendorSpec.AZUL)
+    repositories {
+        mavenCentral()
     }
-    withSourcesJar()
-}
 
-repositories {
-    mavenCentral()
+    plugins.withType<JavaBasePlugin> {
+        extensions.configure<JavaPluginExtension> {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(17))
+                vendor.set(JvmVendorSpec.AZUL)
+            }
+        }
+
+        tasks.withType<Jar> {
+            manifest {
+                attributes(
+                    "Implementation-Title" to project.name,
+                    "Implementation-Version" to project.version,
+                    "Implementation-Vendor" to "RAPTOR"
+                )
+            }
+        }
+
+        // Apply the Error Prone plugin
+        pluginManager.apply(libs.plugins.errorprone.get().pluginId)
+        dependencies {
+            errorprone(libs.errorprone.core)
+        }
+
+        tasks.withType<JavaCompile>().configureEach {
+            options.compilerArgs.add("-Werror") // Converts all Java compiler warnings into errors, to accept no warnings
+            options.release.set(8)
+        }
+    }
 }
 
 dependencies {

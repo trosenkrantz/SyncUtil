@@ -8,7 +8,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class SingleRunnableTest {
     private int count;
 
-    private final Runnable runnable = () -> count++;
+    private void runnable() {
+        count++;
+    }
 
     @BeforeEach
     void setUp() {
@@ -17,14 +19,14 @@ class SingleRunnableTest {
 
     @Test
     void run0Times() {
-        new SingleRunnable(runnable);
+        new SingleRunnable(this::runnable);
 
         assertEquals(0, count);
     }
 
     @Test
     void run1Time() {
-        SingleRunnable singleRunnable = new SingleRunnable(runnable);
+        SingleRunnable singleRunnable = new SingleRunnable(this::runnable);
 
         singleRunnable.run();
 
@@ -33,7 +35,7 @@ class SingleRunnableTest {
 
     @Test
     void run2Times() {
-        SingleRunnable singleRunnable = new SingleRunnable(runnable);
+        SingleRunnable singleRunnable = new SingleRunnable(this::runnable);
 
         singleRunnable.run();
         singleRunnable.run();
@@ -43,7 +45,7 @@ class SingleRunnableTest {
 
     @Test
     void run100Times() {
-        SingleRunnable singleRunnable = new SingleRunnable(runnable);
+        SingleRunnable singleRunnable = new SingleRunnable(this::runnable);
 
         for (int i = 0; i < 100; i++) {
             singleRunnable.run();
