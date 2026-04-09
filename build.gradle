@@ -6,8 +6,13 @@ plugins {
 group 'com.github.trosenkrantz'
 version '1.0.8'
 
-project.sourceCompatibility = '1.8'
-project.targetCompatibility = '1.8'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+        vendor = JvmVendorSpec.AZUL
+    }
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
@@ -17,16 +22,16 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
     testImplementation 'org.mockito:mockito-core:3.12.4'
+
+    testRuntimeOnly(libs.junit.launcher) // Declaring test framework explicitly as recommended by Gradle: https://docs.gradle.org/8.5/userguide/upgrading_version_8.html#test_framework_implementation_dependencies
 }
 
 // Expose everything through OSGi
-jar.bnd('-exportcontents': 'com.github.trosenkrantz.sync.util.*')
-
-task sources(type: Jar) {
-    from sourceSets.main.allSource
-    archiveClassifier.set("sources")
+tasks.named('jar', Jar) {
+    bundle {
+        bnd('-exportcontents': 'com.github.trosenkrantz.sync.util.*')
+    }
 }
-build.dependsOn sources
 
 test {
     useJUnitPlatform()
