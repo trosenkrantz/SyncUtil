@@ -17,6 +17,7 @@ allprojects {
                 languageVersion.set(JavaLanguageVersion.of(17))
                 vendor.set(JvmVendorSpec.AZUL)
             }
+            withSourcesJar()
         }
 
         tasks.withType<Jar> {
