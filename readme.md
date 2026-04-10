@@ -1,8 +1,8 @@
 # SyncUtil
-
 Utility for synchronisation in Java.
-It is built for Java 8 or newer.
+It supports Java 8 and newer.
 
+## Capabilities
 - Only run a `Runnable` once despite calling it from multiple threads simultaneously
   - Dynamically decide which `Runnable` to run
   - Suspend / resume
@@ -14,16 +14,22 @@ It is built for Java 8 or newer.
   - Define task dependencies
   - Repeat tasks
   - Define priority of tasks
+- Orchestrate events in execution windows.
+  - Ensure exactly one event runs per window.
+  - Automatically roll to new windows on event completion.
+  - Track inactivity and trigger fallback tasks when activity markers are missed.
 - OSGi support
 
-## How to Use
+## Getting Started
 1. Choose a release, usually the newest.
 2. Include the released JAR files in your project.
-   - `sync-util-<version>-sources.jar` is optional and will allow your IDE to display the source code, including JavaDoc.
+   - `sync-util-<version>-sources.jar` is optional and will allow your IDE to display the source code, including Javadoc.
    - SyncUtil has no runtime dependencies.
 3. Include `sync-util-<version>.jar` in your build as a dependency.
 
 ## Examples
+
+### Timeout Protection
 Provide a timeout for some heavy work. [`SingleRunnable`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnable.java)  prevents race conditions:
 ```java
 SingleRunnable runnable = new SingleRunnable(this::onDone);
@@ -36,6 +42,7 @@ executor.schedule(runnable, 10, TimeUnit.SECONDS);
 runnable.run();
 ```
 
+### Dynamic Execution Selection
 Same, but dynamically decide which `Runnable` to run with [`SingleRunnableManager`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SingleRunnableManager.java):
 ```java
 SingleRunnableManager runnableManager = new SingleRunnableManager();
@@ -48,6 +55,7 @@ executor.schedule(runnableManager.wrap(this::onTimeout), 10, TimeUnit.SECONDS);
 runnableManager.run(this::onSuccess);
 ```
 
+### Managed Concurrency
 Execute asynchronous requests. [`ConcurrentTaskDriver`](src/main/java/com/github/trosenkrantz/sync/util/concurrency/ConcurrentTaskDriver.java) ensures at most 8 ongoing requests at the same time.
 ```java
 ConcurrentTaskDriver driver = new ConcurrentTaskDriver();
@@ -67,4 +75,14 @@ requests.forEach(request -> driver.queue(onDone -> {
         }
     });
 }));
+```
+
+### Synchronised Event Windows
+Use [`SynchronisedScheduler`](src/main/java/com/github/trosenkrantz/sync/util/runnable/SynchronisedScheduler.java) to manage a sequence of events where only one "win" is allowed per period, with built-in inactivity fallbacks:
+```Java
+SynchronisedScheduler scheduler = new SynchronisedScheduler(executor);
+scheduler.schedule(this::onSuccess, 10, TimeUnit.SECONDS); // Schedule a success task
+scheduler.scheduleOnInactivity(this::onInactivityAlert, 30, TimeUnit.SECONDS); // Also trigger an alert if no activity is seen for 30 seconds
+scheduler.markActivity(); // Marking activity resets the inactivity timer
+scheduler.nextWindow(); // Transitioning manually rolls the window and cancels pending tasks
 ```
