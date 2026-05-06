@@ -12,13 +12,12 @@ It supports Java 8 and newer.
   - Dynamically throttle max number of simultaneous tasks
   - Suspend / resume
   - Define task dependencies
-  - Repeat tasks
-  - Define priority of tasks
-- Orchestrate events in execution windows.
-  - Ensure exactly one event runs per window.
-  - Automatically roll to new windows on event completion.
-  - Track inactivity and trigger fallback tasks when activity markers are missed.
+- Repeat tasks
+- Define priority of tasks
+- Monitor update rates of objects in sliding windows.
+- Orchestrate events in synchronised windows with inactivity fallbacks.
 - OSGi support
+
 
 ## Getting Started
 1. Choose a release, usually the newest.
@@ -85,4 +84,14 @@ scheduler.schedule(this::onSuccess, 10, TimeUnit.SECONDS); // Schedule a success
 scheduler.scheduleOnInactivity(this::onInactivityAlert, 30, TimeUnit.SECONDS); // Also trigger an alert if no activity is seen for 30 seconds
 scheduler.markActivity(); // Marking activity resets the inactivity timer
 scheduler.nextWindow(); // Transitioning manually rolls the window and cancels pending tasks
+```
+
+### Monitoring Update Rates
+Use [`UpdateRateMonitor`](src/main/java/com/github/trosenkrantz/sync/util/concurrency/UpdateRateMonitor.java) to track the frequency of updates for objects within a sliding time window:
+```Java
+UpdateRateMonitor<String> monitor = new UpdateRateMonitor<>(Duration.ofMinutes(5));
+monitor.subscribe(id -> System.out.println("Update for: " + id));
+
+monitor.recordUpdate("my-object");
+double rate = monitor.getAverageUpdateRateById("my-object");
 ```

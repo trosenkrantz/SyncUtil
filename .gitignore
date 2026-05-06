@@ -1,12 +1,12 @@
 ## IDEA
-
 .idea/
 
-
 ## Gradle
-
 .gradle/
 
 # Output of Gradle
 **/build/
 !src/**/build/
+
+# OpenCode
+opencode.json
