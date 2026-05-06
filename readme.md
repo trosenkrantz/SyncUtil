@@ -15,6 +15,7 @@ It supports Java 8 and newer.
 - Repeat tasks
 - Define priority of tasks
 - Monitor update rates of objects in sliding windows.
+- Orchestrate events in synchronised windows with inactivity fallbacks.
 - OSGi support
 
 

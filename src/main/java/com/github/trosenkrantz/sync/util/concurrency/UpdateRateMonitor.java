@@ -60,8 +60,6 @@ public class UpdateRateMonitor<ID> {
             listener.accept(id);
         }
     }
-    
-    // ... (rest of methods)
 
     /**
      * Returns the duration to use as the divisor for rate calculations.
