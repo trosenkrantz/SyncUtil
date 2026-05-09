@@ -24,6 +24,7 @@ public class UpdateRateMonitorTest {
         windowSize = Duration.ofMinutes(5);
         clock = new MutableClock(Instant.now());
         tracker = new UpdateRateMonitor<>(windowSize, clock);
+        tracker.setMinUpdatesPerObjectForAverage(1);
     }
 
     @Test
@@ -98,6 +99,26 @@ public class UpdateRateMonitorTest {
     }
 
     @Test
+    @DisplayName("Should get and set min updates per object for average")
+    void shouldGetAndSetMinUpdatesPerObjectForAverage() {
+        assertEquals(1, tracker.getMinUpdatesPerObjectForAverage());
+        tracker.setMinUpdatesPerObjectForAverage(5);
+        assertEquals(5, tracker.getMinUpdatesPerObjectForAverage());
+    }
+
+    @Test
+    @DisplayName("Should respect min updates per object for average in calculation")
+    void shouldRespectMinUpdatesThreshold() {
+        tracker.setMinUpdatesPerObjectForAverage(2);
+        
+        tracker.recordUpdate("obj1"); // 1 update
+        assertFalse(tracker.getAverageUpdateRatePerObject().isPresent(), "Should be empty as obj1 has only 1 update");
+        
+        tracker.recordUpdate("obj1"); // 2 updates
+        assertTrue(tracker.getAverageUpdateRatePerObject().isPresent(), "Should have value as obj1 has 2 updates");
+    }
+
+    @Test
     @DisplayName("Rate for different ID should be independent")
     void shouldReturnIndependentRates() {
         tracker.recordUpdate("obj1");
@@ -133,6 +154,21 @@ public class UpdateRateMonitorTest {
         
         tracker.recordUpdate("obj1");
         
+        assertEquals("obj1", notifiedId.get());
+    }
+
+    @Test
+    @DisplayName("Should not notify subscribers after unsubscribing")
+    void shouldNotNotifyAfterUnsubscribe() {
+        java.util.concurrent.atomic.AtomicReference<String> notifiedId = new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.function.Consumer<String> listener = notifiedId::set;
+        tracker.subscribe(listener);
+        
+        tracker.recordUpdate("obj1");
+        assertEquals("obj1", notifiedId.get());
+        
+        tracker.unsubscribe(listener);
+        tracker.recordUpdate("obj2");
         assertEquals("obj1", notifiedId.get());
     }
 }

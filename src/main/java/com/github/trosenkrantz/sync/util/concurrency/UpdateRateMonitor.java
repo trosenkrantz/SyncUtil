@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.Optional;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
 /**
@@ -24,6 +25,15 @@ public class UpdateRateMonitor<ID> {
     private final AtomicReference<Instant> firstUpdateEver = new AtomicReference<>();
     private final Clock clock;
     private final List<Consumer<ID>> listeners = new CopyOnWriteArrayList<>();
+    private int minUpdatesPerObjectForAverage = 2;
+
+    public int getMinUpdatesPerObjectForAverage() {
+        return minUpdatesPerObjectForAverage;
+    }
+
+    public void setMinUpdatesPerObjectForAverage(int minUpdates) {
+        this.minUpdatesPerObjectForAverage = minUpdates;
+    }
 
     /**
      * @param windowSize The duration of the sliding window (e.g., Duration.ofMinutes(5)).
@@ -41,6 +51,8 @@ public class UpdateRateMonitor<ID> {
         this.clock = clock;
     }
 
+
+
     /**
      * Subscribes a listener to be notified when an update is recorded for any object.
      * The listener will be called synchronously within the thread that records the update.
@@ -49,6 +61,15 @@ public class UpdateRateMonitor<ID> {
      */
     public void subscribe(Consumer<ID> listener) {
         listeners.add(listener);
+    }
+
+    /**
+     * Unsubscribes a listener.
+     *
+     * @param listener The listener to remove.
+     */
+    public void unsubscribe(Consumer<ID> listener) {
+        listeners.remove(listener);
     }
 
     private void trackFirstUpdate() {
@@ -88,7 +109,9 @@ public class UpdateRateMonitor<ID> {
     }
 
     /**
-     * Gets the update rate across all tracked objects within the current window.
+     * Gets the global update rate across all tracked objects.
+     *
+     * @return the update rate in updates per second, or 0.0 if no updates have been recorded yet.
      */
     public double getGlobalUpdateRate() {
         Instant now = Instant.now(clock);
@@ -103,12 +126,32 @@ public class UpdateRateMonitor<ID> {
     }
 
     /**
-     * Gets the average update rate per object (Global Rate / Number of Active Objects).
+     * Gets the global average update rate per object, considering objects
+     * that have been updated at least minUpdatesPerObjectForAverage times.
+     * This prevents artificially high averages when objects are first being tracked.
+     * The rate is in updates per second.
+     *
+     * @return the average update rate in updates per second, or empty Optional if no objects meet the threshold.
      */
     public Optional<Double> getAverageUpdateRatePerObject() {
-        int objectCount = updateHistory.size();
-        if (objectCount == 0) return Optional.empty();
-        return Optional.of(getGlobalUpdateRate() / objectCount);
+        Instant now = Instant.now(clock);
+        double effectiveWindowSeconds = getEffectiveWindowSeconds(now);
+        
+        List<Double> rates = updateHistory.values().stream()
+            .filter(instants -> instants.size() >= minUpdatesPerObjectForAverage)
+            .map(instants -> (double) instants.size() / effectiveWindowSeconds)
+            .collect(Collectors.toList());
+
+        if (rates.isEmpty()) {
+            return Optional.empty();
+        }
+
+        double average = rates.stream()
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+
+        return Optional.of(average);
     }
 
     /**
