@@ -35,10 +35,17 @@ public class UpdateRateMonitor<ID> {
         this.minUpdatesPerObjectForAverage = minUpdates;
     }
 
+    /**
+     * @param windowSize The duration of the sliding window (e.g., Duration.ofMinutes(5)).
+     */
     public UpdateRateMonitor(Duration windowSize) {
         this(windowSize, Clock.systemUTC());
     }
 
+    /**
+     * @param windowSize The duration of the sliding window (e.g., Duration.ofMinutes(5)).
+     * @param clock The clock to use for time tracking.
+     */
     public UpdateRateMonitor(Duration windowSize, Clock clock) {
         this.windowSize = windowSize;
         this.clock = clock;
@@ -147,6 +154,9 @@ public class UpdateRateMonitor<ID> {
         return Optional.of(average);
     }
 
+    /**
+     * Gets the update rate for a specific ID within the current window.
+     */
     public double getAverageUpdateRateById(ID id) {
         Queue<Instant> timestamps = updateHistory.get(id);
         if (timestamps == null) return 0.0;
